@@ -1,135 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sell Your Work — PhotArt</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sell Your Work - PhotArt</title>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #0d0d0d;
-  color: white;
-}
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
 
-header {
-  padding: 20px 7%;
-  border-bottom: 1px solid #292929;
-}
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 15px;
+    }
 
-.logo {
-  font-size: 28px;
-  font-weight: bold;
-}
+    h1 {
+      margin-bottom: 10px;
+    }
 
-.logo span {
-  color: #ffb000;
-}
+    p {
+      color: #bbb;
+      margin-bottom: 25px;
+    }
 
-.container {
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 20px;
-}
+    label {
+      display: block;
+      margin: 18px 0 8px;
+    }
 
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
-}
+    input, textarea, select {
+      width: 100%;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #292929;
+      color: white;
+      font-size: 16px;
+    }
 
-.subtitle {
-  text-align: center;
-  color: #aaa;
-  margin-bottom: 35px;
-}
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
 
-.form-box {
-  background: #181818;
-  padding: 25px;
-  border-radius: 15px;
-  border: 1px solid #292929;
-}
+    button {
+      width: 100%;
+      margin-top: 25px;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: black;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-label {
-  display: block;
-  margin: 18px 0 8px;
-  font-weight: bold;
-}
+    button:disabled {
+      opacity: 0.6;
+    }
 
-input, textarea, select {
-  width: 100%;
-  padding: 13px;
-  border-radius: 8px;
-  border: 1px solid #444;
-  background: #0d0d0d;
-  color: white;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.button {
-  width: 100%;
-  margin-top: 25px;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  background: #ffb000;
-  color: #111;
-  font-weight: bold;
-  font-size: 16px;
-}
-</style>
+    #message {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">Phot<span>Art</span></div>
-</header>
+  <div class="container">
+    <h1>Sell Your Work</h1>
+    <p>Upload your artwork and list it on PhotArt.</p>
 
-<div class="container">
+    <form id="artworkForm">
 
-  <h1>Sell Your Work</h1>
+      <label>Artwork Title</label>
+      <input type="text" id="title" required>
 
-  <p class="subtitle">
-    Share your photography or artwork with the PhotArt community.
-  </p>
+      <label>Description</label>
+      <textarea id="description" required></textarea>
 
-  <div class="form-box">
+      <label>Artwork Type</label>
+      <select id="artworkType" required>
+        <option value="">Select type</option>
+        <option value="Photography">Photography</option>
+        <option value="Drawing">Drawing</option>
+        <option value="Art Print">Art Print</option>
+      </select>
 
-    <label>Artwork Title</label>
-    <input type="text" placeholder="Enter artwork title">
+      <label>Price (₹)</label>
+      <input type="number" id="price" min="0" step="0.01" required>
 
-    <label>Description</label>
-    <textarea placeholder="Describe your artwork"></textarea>
+      <label>Upload Artwork</label>
+      <input type="file" id="artworkFile" accept="image/*" required>
 
-    <label>Artwork Type</label>
-    <select>
-      <option>Photography</option>
-      <option>Drawing</option>
-      <option>Art Print</option>
-    </select>
+      <button type="submit" id="submitButton">
+        Submit Artwork
+      </button>
 
-    <label>Price (₹)</label>
-    <input type="number" placeholder="Enter your price">
+      <div id="message"></div>
 
-    <label>Upload Artwork</label>
-    <input type="file" accept="image/*">
-
-    <button class="button">Submit Artwork</button>
-
+    </form>
   </div>
 
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL = "https://rlzepraqcsjfdvnxhyoh.supabase.co";
+
+    const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+
+    const { createClient } = supabase;
+
+    const db = createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const form = document.getElementById("artworkForm");
+    const message = document.getElementById("message");
+    const button = document.getElementById("submitButton");
+
+    form.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      button.disabled = true;
+      button.textContent = "Submitting...";
+      message.textContent = "";
+
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const artworkType = document.getElementById("artworkType").value;
+      const price = document.getElementById("price").value;
+      const file = document.getElementById("artworkFile").files[0];
+
+      try {
+
+        const fileName =
+          Date.now() + "-" +
+          file.name.replace(/[^a-zA-Z0-9.-]/g, "-");
+
+        const { error: uploadError } =
+          await db.storage
+            .from("artwork")
+            .upload(fileName, file);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { error: databaseError } =
+          await db
+            .from("artworks")
+            .insert({
+              title: title,
+              description: description,
+              artwork_type: artworkType,
+              price: price,
+              image_path: fileName
+            });
+
+        if (databaseError) {
+          throw databaseError;
+        }
+
+        message.textContent =
+          "Artwork submitted successfully! 🎨";
+
+        form.reset();
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "Something went wrong: " + error.message;
+
+      }
+
+      button.disabled = false;
+      button.textContent = "Submit Artwork";
+    });
+  </script>
 
 </body>
 </html>
