@@ -86,7 +86,28 @@
       color: #aaa;
       margin-top: 30px;
     }
-  </style>
+  .buy-button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.buy-button:hover {
+  opacity: 0.85;
+}
+
+</style>
+
+
+.buy-button:hover {
+  opacity: 0.85;
+}>
 </head>
 
 <body>
@@ -148,21 +169,41 @@
         card.className = "card";
 
         card.innerHTML = `
-          <img src="${imageData.publicUrl}" alt="${artwork.title}">
-          <div class="card-content">
-            <h2>${artwork.title}</h2>
-            <div class="type">${artwork.artwork_type}</div>
-            <div class="description">${artwork.description || ""}</div>
-            <div class="price">₹${artwork.price}</div>
-          </div>
-        `;
+  <img src="${imageData.publicUrl}" alt="${artwork.title}">
+  <div class="card-content">
+    <h2>${artwork.title}</h2>
+    <div class="type">${artwork.artwork_type}</div>
+    <div class="description">${artwork.description || ""}</div>
+    <div class="price">₹${artwork.price}</div>
+
+    <button class="buy-button" onclick="addToCart('${artwork.id}')">
+      🛒 Add to Cart
+    </button>
+  </div>
+`;
+           
 
         grid.appendChild(card);
       });
     }
 
     loadArtwork();
-  </script>
+    
+
+function addToCart(artworkId) {
+  let cart = JSON.parse(localStorage.getItem("photartCart")) || [];
+
+  if (!cart.includes(artworkId)) {
+    cart.push(artworkId);
+    localStorage.setItem("photartCart", JSON.stringify(cart));
+    alert("Artwork added to cart 🛒");
+  } else {
+    alert("This artwork is already in your cart.");
+  }
+}
+
+</script>
 
 </body>
 </html>
+
