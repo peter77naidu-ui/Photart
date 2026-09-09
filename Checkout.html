@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Checkout - PhotArt</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+    }
+
+    h1 {
+      margin-bottom: 25px;
+    }
+
+    .box {
+      background: #1c1c1c;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #292929;
+      color: white;
+      font-size: 16px;
+    }
+
+    .payment-option {
+      padding: 15px;
+      background: #292929;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .payment-option input {
+      width: auto;
+      margin-right: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: black;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>💳 PhotArt Checkout</h1>
+
+    <div class="box">
+
+      <h2>Order Summary</h2>
+
+      <div id="orderItems"></div>
+
+      <div class="total">
+        <span>Total</span>
+        <span>₹<span id="total">0.00</span></span>
+      </div>
+
+    </div>
+
+    <div class="box">
+
+      <h2>Customer Details</h2>
+
+      <label>Full Name</label>
+      <input
+        type="text"
+        id="name"
+        placeholder="Enter your name"
+        required
+      >
+
+      <label>Email</label>
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        required
+      >
+
+      <label>Phone Number</label>
+      <input
+        type="tel"
+        id="phone"
+        placeholder="Enter your phone number"
+        required
+      >
+
+    </div>
+
+    <div class="box">
+
+      <h2>Payment Method</h2>
+
+      <div class="payment-option">
+        <label>
+          <input
+            type="radio"
+            name="payment"
+            value="UPI"
+            checked
+          >
+          📱 UPI
+        </label>
+      </div>
+
+      <div class="payment-option">
+        <label>
+          <input
+            type="radio"
+            name="payment"
+            value="Card"
+          >
+          💳 Card
+        </label>
+      </div>
+
+      <button onclick="startPayment()">
+        Continue to Payment
+      </button>
+
+      <div id="message"></div>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://rlzepraqcsjfdvnxhyoh.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_XYx_6fzJ655rMPR1liOZMA_08iS0u_N";
+
+    const { createClient } = supabase;
+
+    const db = createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+
+    async function loadCheckout() {
+
+      const cart =
+        JSON.parse(localStorage.getItem("photartCart")) || [];
+
+      const orderItems =
+        document.getElementById("orderItems");
+
+      if (cart.length === 0) {
+
+        orderItems.innerHTML =
+          '<p class="empty">Your cart is empty.</p>';
+
+        return;
+      }
+
+      const { data, error } =
+        await db
+          .from("artworks")
+          .select("*")
+          .in("id", cart);
+
+      if (error) {
+
+        console.error(error);
+
+        orderItems.innerHTML =
+          "<p>Unable to load your order.</p>";
+
+        return;
+      }
+
+      let total = 0;
+
+      data.forEach(artwork => {
+
+        total += Number(artwork.price);
+
+        const item =
+          document.createElement("div");
+
+        item.className = "order-item";
+
+        item.innerHTML = `
+          <span>${artwork.title}</span>
+          <span>₹${artwork.price}</span>
+        `;
+
+        orderItems.appendChild(item);
+
+      });
+
+      document.getElementById("total").textContent =
+        total.toFixed(2);
+    }
+
+
+    function startPayment() {
+
+      const name =
+        document.getElementById("name").value.trim();
+
+      const email =
+        document.getElementById("email").value.trim();
+
+      const phone =
+        document.getElementById("phone").value.trim();
+
+      const payment =
+        document.querySelector(
+          'input[name="payment"]:checked'
+        ).value;
+
+      const message =
+        document.getElementById("message");
+
+      if (!name || !email || !phone) {
+
+        message.textContent =
+          "Please fill in all customer details.";
+
+        return;
+      }
+
+      message.textContent =
+        payment +
+        " payment integration will be connected next. 💳";
+    }
+
+
+    loadCheckout();
+
+  </script>
+
+</body>
+</html>
+
