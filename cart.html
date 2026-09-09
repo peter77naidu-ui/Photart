@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Cart - PhotArt</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    h1 {
+      margin-bottom: 25px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 20px;
+      background: #1c1c1c;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      align-items: center;
+    }
+
+    .cart-item img {
+      width: 120px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-info h2 {
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .remove-button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 7px;
+      background: #ff4444;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .remove-button:hover {
+      opacity: 0.8;
+    }
+
+    .cart-summary {
+      background: #1c1c1c;
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 25px;
+    }
+
+    .total {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .checkout-button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: black;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .checkout-button:hover {
+      opacity: 0.85;
+    }
+
+    #emptyCart {
+      text-align: center;
+      background: #1c1c1c;
+      padding: 40px;
+      border-radius: 12px;
+      color: #bbb;
+    }
+
+    @media (max-width: 600px) {
+      .cart-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cart-item img {
+        width: 100%;
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🛒 Your Cart</h1>
+
+    <div id="cartItems"></div>
+
+    <div id="emptyCart" style="display: none;">
+      <h2>Your cart is empty</h2>
+      <p style="margin-top: 10px;">Add some artwork from PhotArt.</p>
+    </div>
+
+    <div class="cart-summary" id="cartSummary" style="display: none;">
+
+      <div class="total">
+        Total: ₹<span id="cartTotal">0</span>
+      </div>
+
+      <button class="checkout-button" onclick="proceedToCheckout()">
+        Proceed to Checkout
+      </button>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+
+    const SUPABASE_URL =
+      "https://rlzepraqcsjfdvnxhyoh.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_XYx_6fzJ655rMPR1liOZMA_08iS0u_N";
+
+    const { createClient } = supabase;
+
+    const db = createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    async function loadCart() {
+
+      const cart =
+        JSON.parse(localStorage.getItem("photartCart")) || [];
+
+      const cartItems =
+        document.getElementById("cartItems");
+
+      const emptyCart =
+        document.getElementById("emptyCart");
+
+      const cartSummary =
+        document.getElementById("cartSummary");
+
+      if (cart.length === 0) {
+
+        emptyCart.style.display = "block";
+        cartSummary.style.display = "none";
+
+        return;
+      }
+
+      const { data, error } =
+        await db
+          .from("artworks")
+          .select("*")
+          .in("id", cart);
+
+      if (error) {
+
+        console.error(error);
+
+        cartItems.innerHTML =
+          "<p>Unable to load your cart.</p>";
+
+        return;
+      }
+
+      let total = 0;
+
+      data.forEach(artwork => {
+
+        total += Number(artwork.price);
+
+        const imageData =
+          db.storage
+            .from("artwork")
+            .getPublicUrl(artwork.image_path);
+
+        const item =
+          document.createElement("div");
+
+        item.className = "cart-item";
+
+        item.innerHTML = `
+          <img
+            src="${imageData.data.publicUrl}"
+            alt="${artwork.title}"
+          >
+
+          <div class="item-info">
+
+            <h2>${artwork.title}</h2>
+
+            <p>${artwork.artwork_type}</p>
+
+            <div class="price">
+              ₹${artwork.price}
+            </div>
+
+          </div>
+
+          <button
+            class="remove-button"
+            onclick="removeFromCart('${artwork.id}')"
+          >
+            Remove
+          </button>
+        `;
+
+        cartItems.appendChild(item);
+
+      });
+
+      document.getElementById("cartTotal").textContent =
+        total.toFixed(2);
+
+      cartSummary.style.display = "block";
+    }
+
+
+    function removeFromCart(artworkId) {
+
+      let cart =
+        JSON.parse(localStorage.getItem("photartCart")) || [];
+
+      cart =
+        cart.filter(id => id !== artworkId);
+
+      localStorage.setItem(
+        "photartCart",
+        JSON.stringify(cart)
+      );
+
+      location.reload();
+    }
+
+
+    function proceedToCheckout() {
+
+      alert(
+        "Checkout will be available soon. Payment integration is the next step. 💳"
+      );
+
+    }
+
+
+    loadCart();
+
+  </script>
+
+</body>
+</html>
