@@ -139,11 +139,20 @@
       const grid = document.getElementById("artworkGrid");
       const message = document.getElementById("message");
 
-      const { data, error } = await db
-        .from("artworks")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const params = new URLSearchParams(window.location.search);
+const category = params.get("category");
 
+let query = db
+  .from("artworks")
+  .select("*");
+
+if (category) {
+  query = query.eq("artwork_type", category);
+}
+
+const { data, error } = await query
+  .order("created_at", { ascending: false });
+      
       if (error) {
         console.error(error);
         message.textContent = "Could not load artwork: " + error.message;
